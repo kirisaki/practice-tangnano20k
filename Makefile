@@ -8,7 +8,7 @@ OSSCAD        ?= $(HOME)/tools/oss-cad-suite
 YOSYS         ?= $(OSSCAD)/bin/yosys
 NEXTPNR       ?= $(OSSCAD)/bin/nextpnr-himbaechel
 PACK          ?= $(OSSCAD)/bin/gowin_pack
-OFL           ?= openFPGALoader
+OFL           ?= $(OSSCAD)/bin/openFPGALoader
 
 BUILD_DIR     := build
 JSON          := $(BUILD_DIR)/$(TOP).json
