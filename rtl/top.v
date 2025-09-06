@@ -1,13 +1,13 @@
 module top (
     input wire clk,
+    input wire rx,
     input wire btn1,
     input wire btn2,
-    output wire uart_tx,
+    output wire tx,
     output wire [5:0] led
 );
 
   wire b1_lv, b2_lv, b1_pr, b1_rl, b2_pr, b2_rl;
-
   edge_det #(
       .CLK_HZ(27_000_000),
       .STARTUP_MS(100),
@@ -31,24 +31,38 @@ module top (
       .rel(b2_rl)
   );
 
-  reg [5:0] cnt = 6'd0;
+  wire b1_uart, b2_uart;
+  uart_keypad #(
+      .CLOCK_FREQUENCY(32'd27_000_000),
+      .BAUD_RATE(32'd115200)
+  ) u_kp (
+      .clk(clk),
+      .rst(1'b0),
+      .rx(rx),
+      .up_pulse(b1_uart),
+      .down_pulse(b2_uart)
+  );
 
-  wire press_any = b1_pr | b2_pr;
-  wire [6:0] next_cnt_calc = b1_pr ? (cnt + 1) : b2_pr ? (cnt - 1) : cnt;
+  wire b1 = b1_pr | b1_uart;
+  wire b2 = b2_pr | b2_uart;
+
+  reg [5:0] cnt = 6'd0;
+  wire [6:0] next_cnt_calc = b1 ? (cnt + 1) : b2 ? (cnt - 1) : cnt;
   wire [5:0] next_cnt = next_cnt_calc[5:0];
+  wire press_any = b1 | b2;
 
   localparam integer MSG_LEN = 9;
-  reg [7:0] msg[0:MSG_LEN-1];
-  reg [5:0] cnt_latched;
-  reg [3:0] idx = 4'd0;
-  reg busy = 1'b0;
-  reg pending = 1'b0;
+  reg  [7:0] msg            [0:MSG_LEN-1];
+  reg  [5:0] cnt_latched;
+  reg  [3:0] idx = 4'd0;
+  reg        busy = 1'b0;
+  reg        pending = 1'b0;
 
-  reg [7:0] din = 8'h00;
-  reg empty = 1'b1;
-  wire re;
-  wire uart_dout;
-  assign uart_tx = uart_dout;
+  reg  [7:0] din = 8'h00;
+  reg        empty = 1'b1;
+  wire       re;
+  wire       uart_dout;
+  assign tx = uart_dout;
 
   reg  re_q = 1'b0;
   wire re_p = re & ~re_q;
@@ -126,8 +140,8 @@ module top (
 
   uart_tx #(
       .CLOCK_FREQUENCY(32'd27_000_000),
-      .BAUD_RATE      (32'd115200),
-      .WORD_WIDTH     (32'd8)
+      .BAUD_RATE(32'd115200),
+      .WORD_WIDTH(32'd8)
   ) U_TX (
       .clk  (clk),
       .rst  (1'b0),

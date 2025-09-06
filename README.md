@@ -6,3 +6,4 @@ practicies of Tang Nano 20K
 
 - LED counter
 - UART TX
+- UART RX
